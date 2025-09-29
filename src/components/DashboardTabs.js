@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import ContractScreen from '../screens/ContractScreen';
 import DocumentManagementScreen from '../screens/DocumentManagementScreen';
 import DataManagementScreen from '../screens/DataManagementScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 import { getCurrentUser, logoutUser } from '../services/authService';
 import {
   View,
@@ -86,12 +87,15 @@ const DashboardHome = ({ navigation }) => {
             <Text style={styles.summaryStatus}>42 exitosos</Text>
           </TouchableOpacity>
 
-          <View style={styles.summaryCard}>
-            <Ionicons name="calendar" size={32} color="#9b59b6" />
-            <Text style={styles.summaryTitle}>Próximo Pago</Text>
-            <Text style={styles.summarySubtitle}>15 Oct 2024</Text>
-            <Text style={styles.summaryStatus}>$25,000</Text>
-          </View>
+          <TouchableOpacity 
+            style={styles.summaryCard}
+            onPress={() => navigation.navigate('Profile')}
+          >
+            <Ionicons name="person" size={32} color="#9b59b6" />
+            <Text style={styles.summaryTitle}>Mi Perfil</Text>
+            <Text style={styles.summarySubtitle}>Información</Text>
+            <Text style={styles.summaryStatus}>Ver perfil</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Actividades Recientes */}
@@ -143,6 +147,8 @@ const DashboardTabs = () => {
             iconName = focused ? 'folder' : 'folder-outline';
           } else if (route.name === 'Data') {
             iconName = focused ? 'analytics' : 'analytics-outline';
+          } else if (route.name === 'Profile') {
+            iconName = focused ? 'person' : 'person-outline';
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -190,6 +196,13 @@ const DashboardTabs = () => {
         component={DataManagementScreen}
         options={{
           tabBarLabel: 'Datos',
+        }}
+      />
+      <Tab.Screen 
+        name="Profile" 
+        component={ProfileScreen}
+        options={{
+          tabBarLabel: 'Perfil',
         }}
       />
     </Tab.Navigator>

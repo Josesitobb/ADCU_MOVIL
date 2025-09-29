@@ -12,11 +12,11 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { loginUser } from '../services/authService';
+import { loginUser, getNavigationScreenForRole } from '../services/authService';
 
 const LoginScreen = ({ navigation }) => {
-  const [email, setEmail] = useState('annyfalkonerth@gmail.com');
-  const [password, setPassword] = useState('Prueba1234567');
+  const [email, setEmail] = useState('funcionario200@gmail.com');
+  const [password, setPassword] = useState('Funcionario200123');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -36,10 +36,13 @@ const LoginScreen = ({ navigation }) => {
       const response = await loginUser(email, password);
       
       if (response.success) {
+        // Determinar la pantalla según el rol del usuario
+        const targetScreen = await getNavigationScreenForRole();
+        
         Alert.alert('Éxito', 'Inicio de sesión exitoso', [
           {
             text: 'OK',
-            onPress: () => navigation.navigate('Dashboard'),
+            onPress: () => navigation.navigate(targetScreen),
           },
         ]);
       } else {
