@@ -12,6 +12,8 @@ import EditContractScreen from './src/screens/EditContractScreen';
 import DocumentContractorsScreen from './src/screens/DocumentContractorsScreen';
 import ContractorDocumentsScreen from './src/screens/ContractorDocumentsScreen';
 import AllDocumentManagementsScreen from './src/screens/AllDocumentManagementsScreen';
+import DataAnalysisScreen from './src/screens/DataAnalysisScreen';
+import ComparisonsScreen from './src/screens/ComparisonsScreen';
 import DashboardTabs from './src/components/DashboardTabs';
 
 const Stack = createNativeStackNavigator();
@@ -107,6 +109,20 @@ export default function App() {
           component={AllDocumentManagementsScreen}
           options={{
             title: 'Todas las Gestiones',
+          }}
+        />
+        <Stack.Screen 
+          name="DataAnalysis" 
+          component={DataAnalysisScreen}
+          options={{
+            title: 'Análisis de Datos',
+          }}
+        />
+        <Stack.Screen 
+          name="Comparisons" 
+          component={ComparisonsScreen}
+          options={{
+            title: 'Comparaciones',
           }}
         />
       </Stack.Navigator>

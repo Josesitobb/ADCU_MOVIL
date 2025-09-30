@@ -189,10 +189,13 @@ const HomeScreen = ({ navigation }) => {
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.functionCard}>
-              <Ionicons name="analytics-outline" size={32} color="#f39c12" />
-              <Text style={styles.functionTitle}>Reportes</Text>
-              <Text style={styles.functionSubtitle}>Generar reportes</Text>
+            <TouchableOpacity 
+              style={styles.functionCard}
+              onPress={() => navigation.navigate('DataAnalysis')}
+            >
+              <Ionicons name="analytics" size={32} color="#f39c12" />
+              <Text style={styles.functionTitle}>Análisis de Datos</Text>
+              <Text style={styles.functionSubtitle}>Analizar gestiones documentales</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.functionCard}>
