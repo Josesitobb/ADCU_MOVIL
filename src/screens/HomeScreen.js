@@ -198,6 +198,15 @@ const HomeScreen = ({ navigation }) => {
               <Text style={styles.functionSubtitle}>Analizar gestiones documentales</Text>
             </TouchableOpacity>
 
+            <TouchableOpacity 
+              style={styles.functionCard}
+              onPress={() => navigation.navigate('Verification')}
+            >
+              <Ionicons name="shield-checkmark" size={32} color="#27ae60" />
+              <Text style={styles.functionTitle}>Verificaciones</Text>
+              <Text style={styles.functionSubtitle}>Estado final de documentos</Text>
+            </TouchableOpacity>
+
             <TouchableOpacity style={styles.functionCard}>
               <Ionicons name="settings-outline" size={32} color="#9b59b6" />
               <Text style={styles.functionTitle}>Configuración</Text>

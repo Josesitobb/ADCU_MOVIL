@@ -14,6 +14,7 @@ import ContractorDocumentsScreen from './src/screens/ContractorDocumentsScreen';
 import AllDocumentManagementsScreen from './src/screens/AllDocumentManagementsScreen';
 import DataAnalysisScreen from './src/screens/DataAnalysisScreen';
 import ComparisonsScreen from './src/screens/ComparisonsScreen';
+import VerificationScreen from './src/screens/VerificationScreen';
 import DashboardTabs from './src/components/DashboardTabs';
 
 const Stack = createNativeStackNavigator();
@@ -123,6 +124,13 @@ export default function App() {
           component={ComparisonsScreen}
           options={{
             title: 'Comparaciones',
+          }}
+        />
+        <Stack.Screen 
+          name="Verification" 
+          component={VerificationScreen}
+          options={{
+            title: 'Verificaciones',
           }}
         />
       </Stack.Navigator>

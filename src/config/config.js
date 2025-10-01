@@ -1,7 +1,7 @@
 // Configuración de la aplicación
 export const CONFIG = {
   // URL de tu API
-  API_BASE_URL: 'http://192.168.0.6:5000/api',
+  API_BASE_URL: 'http://192.168.0.7:5000/api',
   
   // Configuración de la API
   API_TIMEOUT: 10000, // 10 segundos
