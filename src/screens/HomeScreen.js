@@ -13,14 +13,20 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { getCurrentUser, logoutUser } from '../services/authService';
+import apiClient from '../services/authService';
 
 const HomeScreen = ({ navigation }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [contractStats, setContractStats] = useState(null);
+  const [documentStats, setDocumentStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(false);
 
   useEffect(() => {
     loadUser();
+    loadContractStats();
+    loadDocumentStats();
   }, []);
 
   const loadUser = async () => {
@@ -37,9 +43,54 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
+  const loadContractStats = async () => {
+    try {
+      setStatsLoading(true);
+      console.log('📊 Cargando estadísticas de contratos...');
+      
+      const response = await apiClient.get('/Contracts/stats');
+      
+      if (response.data && response.data.success) {
+        console.log('✅ Estadísticas cargadas:', response.data.data);
+        setContractStats(response.data.data);
+      } else {
+        console.error('❌ Error al cargar estadísticas');
+        setContractStats(null);
+      }
+    } catch (error) {
+      console.error('❌ Error cargando estadísticas:', error);
+      setContractStats(null);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  const loadDocumentStats = async () => {
+    try {
+      console.log('📄 Cargando estadísticas de documentos...');
+      
+      const response = await apiClient.get('/Documents/stats');
+      
+      if (response.data && response.data.success) {
+        console.log('✅ Estadísticas de documentos cargadas:', response.data.data);
+        setDocumentStats(response.data.data);
+      } else {
+        console.error('❌ Error al cargar estadísticas de documentos');
+        setDocumentStats(null);
+      }
+    } catch (error) {
+      console.error('❌ Error cargando estadísticas de documentos:', error);
+      setDocumentStats(null);
+    }
+  };
+
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadUser();
+    await Promise.all([
+      loadUser(),
+      loadContractStats(),
+      loadDocumentStats()
+    ]);
     setRefreshing(false);
   };
 
@@ -215,47 +266,190 @@ const HomeScreen = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Estadísticas Rápidas */}
+        {/* Estadísticas de Contratos */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Ionicons name="bar-chart-outline" size={24} color="#f39c12" />
-            <Text style={styles.cardTitle}>Estadísticas del Día</Text>
+            <Text style={styles.cardTitle}>Estadísticas de Contratos</Text>
+            {statsLoading && (
+              <ActivityIndicator size="small" color="#f39c12" style={{ marginLeft: 8 }} />
+            )}
           </View>
           
-          <View style={styles.statsGrid}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>25</Text>
-              <Text style={styles.statLabel}>Documentos Revisados</Text>
+          {contractStats ? (
+            <View style={styles.statsContainer}>
+              {/* Primera fila */}
+              <View style={styles.statsRow}>
+                <View style={[styles.statItem, styles.statItemPrimary]}>
+                  <Text style={[styles.statNumber, styles.statNumberPrimary]}>
+                    {contractStats['Total de contratos'] || 0}
+                  </Text>
+                  <Text style={styles.statLabel}>Total Contratos</Text>
+                </View>
+                
+                <View style={[styles.statItem, styles.statItemSuccess]}>
+                  <Text style={[styles.statNumber, styles.statNumberSuccess]}>
+                    {contractStats['Contratos activos'] || 0}
+                  </Text>
+                  <Text style={styles.statLabel}>Activos</Text>
+                </View>
+              </View>
+
+              {/* Segunda fila */}
+              <View style={styles.statsRow}>
+                <View style={[styles.statItem, styles.statItemDanger]}>
+                  <Text style={[styles.statNumber, styles.statNumberDanger]}>
+                    {contractStats['Contratos inactivos'] || 0}
+                  </Text>
+                  <Text style={styles.statLabel}>Inactivos</Text>
+                </View>
+                
+                <View style={[styles.statItem, styles.statItemWarning]}>
+                  <Text style={[styles.statNumber, styles.statNumberWarning]}>
+                    {contractStats['Contratos expirados'] || 0}
+                  </Text>
+                  <Text style={styles.statLabel}>Expirados</Text>
+                </View>
+              </View>
+
+              {/* Tercera fila */}
+              <View style={styles.statsRow}>
+                <View style={[styles.statItem, styles.statItemInfo]}>
+                  <Text style={[styles.statNumber, styles.statNumberInfo]}>
+                    {contractStats['Contratos vinculados'] || 0}
+                  </Text>
+                  <Text style={styles.statLabel}>Vinculados</Text>
+                </View>
+                
+                <View style={[styles.statItem, styles.statItemSecondary]}>
+                  <Text style={[styles.statNumber, styles.statNumberSecondary]}>
+                    {contractStats['Contratos no vinculados'] || 0}
+                  </Text>
+                  <Text style={styles.statLabel}>No Vinculados</Text>
+                </View>
+              </View>
+
+              {/* Indicador de actualización */}
+              <View style={styles.lastUpdateContainer}>
+                <Ionicons name="time-outline" size={12} color="#666" />
+                <Text style={styles.lastUpdateText}>
+                  Actualizado: {new Date().toLocaleTimeString('es-ES', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  })}
+                </Text>
+              </View>
             </View>
-            
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>8</Text>
-              <Text style={styles.statLabel}>Contratos Activos</Text>
+          ) : (
+            <View style={styles.statsErrorContainer}>
+              <Ionicons name="alert-circle-outline" size={32} color="#ccc" />
+              <Text style={styles.statsErrorText}>
+                {statsLoading ? 'Cargando estadísticas...' : 'No se pudieron cargar las estadísticas'}
+              </Text>
+              <TouchableOpacity 
+                style={styles.retryButton}
+                onPress={loadContractStats}
+                disabled={statsLoading}
+              >
+                <Ionicons name="refresh" size={16} color="#0066CC" />
+                <Text style={styles.retryButtonText}>Reintentar</Text>
+              </TouchableOpacity>
             </View>
-            
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>3</Text>
-              <Text style={styles.statLabel}>Pendientes</Text>
-            </View>
-          </View>
+          )}
         </View>
 
-        {/* Acciones Rápidas */}
+        {/* Estadísticas de Documentos */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
-            <Ionicons name="flash-outline" size={24} color="#e67e22" />
-            <Text style={styles.cardTitle}>Acciones Rápidas</Text>
+            <Ionicons name="document-text-outline" size={24} color="#27ae60" />
+            <Text style={styles.cardTitle}>Estadísticas de Documentos</Text>
+            {statsLoading && (
+              <ActivityIndicator size="small" color="#27ae60" style={{ marginLeft: 8 }} />
+            )}
           </View>
           
-          <TouchableOpacity style={styles.actionButton}>
-            <Ionicons name="add-circle-outline" size={20} color="#ffffff" />
-            <Text style={styles.actionButtonText}>Nuevo Registro</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#2ecc71' }]}>
-            <Ionicons name="checkmark-circle-outline" size={20} color="#ffffff" />
-            <Text style={styles.actionButtonText}>Aprobar Documentos</Text>
-          </TouchableOpacity>
+          {documentStats ? (
+            <View style={styles.statsContainer}>
+              {/* Primera fila */}
+              <View style={styles.statsRow}>
+                <View style={[styles.statItem, styles.statItemPrimary]}>
+                  <Text style={[styles.statNumber, styles.statNumberPrimary]}>
+                    {documentStats['total de documentos'] || 0}
+                  </Text>
+                  <Text style={styles.statLabel}>Total Gestiones</Text>
+                </View>
+                
+                <View style={[styles.statItem, styles.statItemInfo]}>
+                  <Text style={[styles.statNumber, styles.statNumberInfo]}>
+                    {documentStats['Documentos en el sistema'] || 0}
+                  </Text>
+                  <Text style={styles.statLabel}>En el Sistema</Text>
+                </View>
+              </View>
+
+              {/* Segunda fila */}
+              <View style={styles.statsRow}>
+                <View style={[styles.statItem, styles.statItemSuccess]}>
+                  <Text style={[styles.statNumber, styles.statNumberSuccess]}>
+                    {documentStats['documentos activos'] || 0}
+                  </Text>
+                  <Text style={styles.statLabel}>Activos</Text>
+                </View>
+                
+                <View style={[styles.statItem, styles.statItemDanger]}>
+                  <Text style={[styles.statNumber, styles.statNumberDanger]}>
+                    {documentStats['documentos inactivos'] || 0}
+                  </Text>
+                  <Text style={styles.statLabel}>Inactivos</Text>
+                </View>
+              </View>
+
+              {/* Tercera fila */}
+              <View style={styles.statsRow}>
+                <View style={[styles.statItem, styles.statItemWarning]}>
+                  <Text style={[styles.statNumber, styles.statNumberWarning]}>
+                    {documentStats['Contratistas sin gestiones documentales'] || 0}
+                  </Text>
+                  <Text style={styles.statLabel}>Sin Gestión</Text>
+                </View>
+                
+                <View style={[styles.statItem, styles.statItemSecondary]}>
+                  <Text style={[styles.statNumber, styles.statNumberSecondary]}>
+                    {documentStats['total de documentos'] > 0 
+                      ? Math.round((documentStats['documentos activos'] / documentStats['total de documentos']) * 100)
+                      : 0}%
+                  </Text>
+                  <Text style={styles.statLabel}>% Activos</Text>
+                </View>
+              </View>
+
+              {/* Indicador de actualización */}
+              <View style={styles.lastUpdateContainer}>
+                <Ionicons name="time-outline" size={12} color="#666" />
+                <Text style={styles.lastUpdateText}>
+                  Actualizado: {new Date().toLocaleTimeString('es-ES', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  })}
+                </Text>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.statsErrorContainer}>
+              <Ionicons name="alert-circle-outline" size={32} color="#ccc" />
+              <Text style={styles.statsErrorText}>
+                {statsLoading ? 'Cargando estadísticas...' : 'No se pudieron cargar las estadísticas de documentos'}
+              </Text>
+              <TouchableOpacity 
+                style={styles.retryButton}
+                onPress={loadDocumentStats}
+                disabled={statsLoading}
+              >
+                <Ionicons name="refresh" size={16} color="#0066CC" />
+                <Text style={styles.retryButtonText}>Reintentar</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {/* Botón de Cerrar Sesión */}
@@ -421,17 +615,121 @@ const styles = StyleSheet.create({
   },
   statItem: {
     alignItems: 'center',
+    flex: 1,
+    padding: 12,
+    margin: 4,
+    borderRadius: 8,
+    backgroundColor: '#f8f9fa',
   },
   statNumber: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#3498db',
   },
   statLabel: {
-    fontSize: 12,
-    color: '#7f8c8d',
+    fontSize: 11,
+    color: '#666',
     marginTop: 4,
     textAlign: 'center',
+    fontWeight: '500',
+  },
+  // Nuevos estilos para estadísticas de contratos
+  statsContainer: {
+    paddingVertical: 8,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  statItemPrimary: {
+    backgroundColor: '#e3f2fd',
+    borderLeftWidth: 4,
+    borderLeftColor: '#2196f3',
+  },
+  statNumberPrimary: {
+    color: '#1976d2',
+  },
+  statItemSuccess: {
+    backgroundColor: '#e8f5e8',
+    borderLeftWidth: 4,
+    borderLeftColor: '#4caf50',
+  },
+  statNumberSuccess: {
+    color: '#388e3c',
+  },
+  statItemDanger: {
+    backgroundColor: '#ffebee',
+    borderLeftWidth: 4,
+    borderLeftColor: '#f44336',
+  },
+  statNumberDanger: {
+    color: '#d32f2f',
+  },
+  statItemWarning: {
+    backgroundColor: '#fff8e1',
+    borderLeftWidth: 4,
+    borderLeftColor: '#ff9800',
+  },
+  statNumberWarning: {
+    color: '#f57c00',
+  },
+  statItemInfo: {
+    backgroundColor: '#e0f2f1',
+    borderLeftWidth: 4,
+    borderLeftColor: '#009688',
+  },
+  statNumberInfo: {
+    color: '#00695c',
+  },
+  statItemSecondary: {
+    backgroundColor: '#f3e5f5',
+    borderLeftWidth: 4,
+    borderLeftColor: '#9c27b0',
+  },
+  statNumberSecondary: {
+    color: '#7b1fa2',
+  },
+  lastUpdateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#e9ecef',
+  },
+  lastUpdateText: {
+    fontSize: 10,
+    color: '#666',
+    marginLeft: 4,
+    fontStyle: 'italic',
+  },
+  statsErrorContainer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  statsErrorText: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 12,
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#f0f7ff',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#0066CC',
+  },
+  retryButtonText: {
+    fontSize: 12,
+    color: '#0066CC',
+    marginLeft: 4,
+    fontWeight: '600',
   },
   actionButton: {
     backgroundColor: '#3498db',

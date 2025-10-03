@@ -108,6 +108,35 @@ const DataAnalysisScreen = ({ navigation }) => {
       }
 
     } catch (error) {
+      // Manejo específico para errores 400 de archivos faltantes (sin logs para evitar pantalla de error)
+      if (error.response && error.response.status === 400 && error.response.data?.message) {
+        const message = error.response.data.message;
+        
+        // Detectar si es error de archivo faltante
+        if (message.includes('Falta el archivo') || message.includes('falta') || message.includes('archivo')) {
+          console.log('🔍 Análisis detenido - Documentos faltantes para:', contractorName);
+          Alert.alert(
+            '📄 Documentos Incompletos',
+            `No se puede realizar el análisis para ${contractorName} porque faltan documentos.\n\n📋 Detalle: ${message}\n\n💡 Asegúrate de que todos los documentos estén subidos correctamente antes de crear el análisis.`,
+            [
+              { text: 'Revisar Documentos', onPress: () => navigation.navigate('DocumentContractors') },
+              { text: 'Entendido', style: 'cancel' }
+            ]
+          );
+          return; // Salir temprano - error manejado
+        }
+        
+        // Para otros errores 400 de validación
+        console.log('⚠️ Error de validación para:', contractorName);
+        Alert.alert(
+          '⚠️ Error de Validación',
+          `No se puede procesar el análisis de ${contractorName}.\n\n📋 Motivo: ${message}`,
+          [{ text: 'Entendido' }]
+        );
+        return; // Salir temprano - error manejado
+      }
+
+      // Para otros errores, mostrar logs detallados
       console.error('❌ ========== ERROR DETALLADO ==========');
       console.error('❌ Error completo:', error);
       console.error('❌ Error name:', error.name);

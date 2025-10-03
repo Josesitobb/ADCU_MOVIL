@@ -866,6 +866,62 @@ export const updateDataField = async (managementId, fieldName, file) => {
   }
 };
 
+// Nueva función para obtener análisis de datos de documentos
+export const getDocumentAnalysis = async (managementId) => {
+  try {
+    console.log('📊 Obteniendo análisis de documentos para ID:', managementId);
+    
+    // Endpoint específico para el análisis de datos
+    const endpoint = `http://192.168.0.7:5000/api/Data/${managementId}`;
+    
+    console.log('🌐 GET - Consultando análisis:', endpoint);
+    
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const responseData = await response.json();
+    
+    console.log('📋 Respuesta análisis completa:', JSON.stringify(responseData, null, 2));
+
+    if (response.ok && responseData.success) {
+      return {
+        success: true,
+        message: responseData.message,
+        data: responseData.data,
+        fullResponse: responseData
+      };
+    } else {
+      // Manejar caso específico de "No existe una gestion documental con ese id"
+      if (responseData.message && responseData.message.includes('No existe una gestion documental con ese id')) {
+        return {
+          success: false,
+          message: 'Todavía no se han analizado sus documentos. Por favor espere o contacte a su administrador.',
+          noAnalysis: true,
+          originalMessage: responseData.message,
+          fullResponse: responseData
+        };
+      }
+      
+      return {
+        success: false,
+        message: responseData.message || 'Error al obtener análisis',
+        fullResponse: responseData
+      };
+    }
+  } catch (error) {
+    console.error('💥 Error obteniendo análisis:', error);
+    return {
+      success: false,
+      message: 'Error de conexión al obtener el análisis',
+      error: error.message
+    };
+  }
+};
+
 export default {
   DOCUMENT_FIELDS,
   getDocuments,
@@ -878,5 +934,6 @@ export default {
   getAllDataManagement,
   getDataById,
   createData,
-  updateDataField
+  updateDataField,
+  getDocumentAnalysis
 };

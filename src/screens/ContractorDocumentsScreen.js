@@ -53,15 +53,9 @@ const ContractorDocumentsScreen = ({ navigation, route }) => {
   ];
 
   useEffect(() => {
-    console.log('🚀 ContractorDocumentsScreen iniciando - Contractor ID:', contractor._id);
     loadUserRole();
     loadDocuments();
   }, []);
-
-  useEffect(() => {
-    console.log('📊 Estado de documentos actualizado - Total:', documents.length);
-    console.log('📊 Documentos en state:', documents);
-  }, [documents]);
 
   const loadUserRole = async () => {
     try {
@@ -70,48 +64,17 @@ const ContractorDocumentsScreen = ({ navigation, route }) => {
         setUserRole(result.role);
       }
     } catch (error) {
-      console.error('Error loading user role:', error);
+      // Error handling silently
     }
   };
 
   const loadDocuments = async () => {
     try {
       setIsLoading(true);
-      console.log('� ========== INICIANDO CARGA DE DOCUMENTOS ==========');
-      console.log('�📂 Contratista ID completo:', contractor._id);
-      console.log('📂 Contratista objeto completo:', JSON.stringify(contractor, null, 2));
-      console.log('📂 Llamando getContractorDocuments con ID:', contractor._id);
       
       const result = await getContractorDocuments(contractor._id);
       
-      console.log('📥 ========== RESPUESTA COMPLETA DE LA API ==========');
-      console.log('📥 🔍 ANÁLISIS COMPLETO DEL RESULTADO:');
-      console.log('📥 - result (objeto completo):', JSON.stringify(result, null, 2));
-      console.log('📥 - result.success:', result.success);
-      console.log('📥 - result.message:', result.message);
-      console.log('📥 - result.data:', result.data);
-      console.log('📥 - Tipo de result.data:', typeof result.data);
-      console.log('📥 - Es Array result.data:', Array.isArray(result.data));
-      console.log('📥 - Object.keys(result):', Object.keys(result));
-      if (result.data && typeof result.data === 'object') {
-        console.log('📥 - Object.keys(result.data):', Object.keys(result.data));
-        console.log('📥 - Object.values(result.data):', Object.values(result.data));
-      }
-
-      // Mostrar información completa en alert para debugging
-      Alert.alert(
-        'Información Completa de API', 
-        `RESPUESTA COMPLETA:\n\n${JSON.stringify(result, null, 2)}`,
-        [{ text: 'OK' }]
-      );
-      
       if (result.success) {
-        console.log('🔄 ========== INICIO PROCESAMIENTO DOCUMENTOS ==========');
-        console.log('✅ Respuesta completa de la API:', JSON.stringify(result, null, 2));
-        console.log('📋 Tipo de result.data:', typeof result.data);
-        console.log('📋 Es Array result.data:', Array.isArray(result.data));
-        console.log('📋 Contenido result.data:', result.data);
-        
         // Convertir la estructura de la API a formato de documentos individuales
         const convertedDocuments = [];
         
@@ -119,23 +82,12 @@ const ContractorDocumentsScreen = ({ navigation, route }) => {
         const documentManagement = result.data;
         
         if (documentManagement && documentManagement._id) {
-          console.log('📋 Gestión documental encontrada ID:', documentManagement._id);
-          console.log('📋 creationDate:', documentManagement.creationDate);
-          console.log('📋 state:', documentManagement.state);
-          console.log('📋 description:', documentManagement.description);
-          
           if (documentManagement.creationDate) {
-            console.log('🔍 Verificando campos de documentos...');
-            console.log('📋 Campos a verificar:', documentFields.map(f => f.name));
-            
             // Iterar sobre todos los campos de documentos
             documentFields.forEach(field => {
               const fieldValue = documentManagement[field.name];
-              console.log(`🔍 Verificando campo ${field.name}:`, fieldValue);
               
               if (fieldValue && fieldValue.toString().trim() !== '') {
-                console.log(`✅ Documento encontrado - ${field.name}: ${fieldValue}`);
-                
                 convertedDocuments.push({
                   id: `${documentManagement._id}-${field.name}`,
                   name: `${field.label}.pdf`,
@@ -149,48 +101,58 @@ const ContractorDocumentsScreen = ({ navigation, route }) => {
                   description: documentManagement.description || 'Documento subido',
                   version: documentManagement.version || 1
                 });
-              } else {
-                console.log(`❌ Campo vacío o null - ${field.name}:`, fieldValue);
               }
             });
-            
-            console.log(`📊 Total de documentos procesados: ${convertedDocuments.length}`);
-            console.log('📊 Documentos convertidos:', convertedDocuments);
-          } else {
-            console.log('❌ No hay creationDate en la gestión documental');
           }
-        } else {
-          console.log('❌ No se encontró gestión documental válida');
-          console.log('❌ documentManagement:', documentManagement);
         }
         
-        console.log('🏁 ========== FIN PROCESAMIENTO DOCUMENTOS ==========');
         setDocuments(convertedDocuments);
         
         // Mostrar mensaje según el resultado
         if (result.isNewDocumentManagement) {
-          console.log('ℹ️ Primera vez - mostrando mensaje de bienvenida');
           Alert.alert(
             'Gestión Documental', 
             'Este contratista puede comenzar a subir sus documentos. Los archivos aparecerán aquí una vez subidos.',
             [{ text: 'Entendido' }]
           );
-        } else if (convertedDocuments.length > 0) {
-          console.log(`🎉 ÉXITO: Se encontraron ${convertedDocuments.length} documentos existentes`);
-          console.log('🎉 La UI debería mostrar estos documentos ahora');
-        } else if (documentManagement && documentManagement.creationDate) {
-          console.log('⚠️ ADVERTENCIA: Gestión documental existe pero no hay archivos de documentos');
-        } else {
-          console.log('❌ ERROR: No se encontró gestión documental válida');
         }
       } else {
-        console.log('⚠️ No se pudieron cargar documentos:', result.message);
-        Alert.alert('Error', result.message || 'Error al cargar documentos');
+        // Manejo específico para gestión documental no encontrada
+        if (result.message && result.message.includes('Gestion Documental no encontrada')) {
+          Alert.alert(
+            'Sin Gestión Documental',
+            'Este usuario no tiene una gestión documental creada. Por favor, carga una gestión documental primero.',
+            [{ text: 'Entendido' }]
+          );
+        }
+        // Solo mostrar alert para el mensaje específico de contratista sin documentos
+        else if (result.message && result.message.includes('Este contratista aun no tiene documentos registrados')) {
+          Alert.alert(
+            'Sin Documentos Registrados',
+            'Este contratista aún no tiene documentos registrados. Puede comenzar a subir documentos usando el botón "Subir Documentos".',
+            [{ text: 'Entendido' }]
+          );
+        }
         setDocuments([]);
       }
     } catch (error) {
-      console.error('Error loading documents:', error);
-      Alert.alert('Error', 'Error al cargar documentos');
+      // Manejo específico para errores 404 (no encontrado) - sin mostrar pantalla de error
+      if (error.response && error.response.status === 404) {
+        setDocuments([]);
+        return; // Salir sin mostrar alert
+      }
+      
+      // Para otros errores de red, manejo silencioso también
+      if (error.response) {
+        setDocuments([]);
+        return; // Salir sin mostrar alert
+      }
+      
+      // Solo mostrar alert para errores realmente críticos (no de red)
+      if (!error.code || !error.code.includes('NETWORK')) {
+        Alert.alert('Error', 'Error al cargar documentos');
+      }
+      
       setDocuments([]);
     } finally {
       setIsLoading(false);
@@ -218,7 +180,6 @@ const ContractorDocumentsScreen = ({ navigation, route }) => {
 
       if (!result.canceled && result.assets && result.assets[0]) {
         const file = result.assets[0];
-        console.log(`📎 Documento seleccionado para ${fieldName}:`, file.name);
         
         // Verificar que el archivo sea PDF
         const isPDF = file.name.toLowerCase().endsWith('.pdf') || 
@@ -255,12 +216,8 @@ const ContractorDocumentsScreen = ({ navigation, route }) => {
             uploadDate: new Date().toISOString()
           }
         }));
-
-        const sizeText = file.size ? ` (${formatFileSize(file.size)})` : '';
-        Alert.alert('PDF Seleccionado', `${fieldLabel}: ${file.name}${sizeText}`);
       }
     } catch (error) {
-      console.error('Error picking document:', error);
       Alert.alert('Error', 'Error al seleccionar documento');
     }
   };
@@ -273,8 +230,6 @@ const ContractorDocumentsScreen = ({ navigation, route }) => {
       }
 
       setIsUploading(true);
-      console.log('📤 Subiendo documentos para contratista:', contractor._id);
-      console.log('📋 Archivos a subir:', Object.keys(selectedFiles));
 
       // Validación final de que todos los archivos sean PDF
       const invalidFiles = Object.entries(selectedFiles).filter(([fieldName, fileData]) => {
@@ -304,12 +259,6 @@ const ContractorDocumentsScreen = ({ navigation, route }) => {
       const retentionTime = '365'; // Un año de retención por defecto
       const state = true; // Estado activo por defecto
 
-      console.log('📝 Datos adicionales:');
-      console.log('  - description:', description);
-      console.log('  - ip del usuario:', userIp);
-      console.log('  - retentionTime:', retentionTime);
-      console.log('  - state:', state);
-
       const result = await uploadContractorDocuments(
         contractor._id, 
         selectedFiles, 
@@ -319,33 +268,16 @@ const ContractorDocumentsScreen = ({ navigation, route }) => {
         state
       );
 
-      console.log('📥 ========== RESPUESTA COMPLETA DE SUBIDA ==========');
-      console.log('📥 🔍 RESULTADO COMPLETO:', JSON.stringify(result, null, 2));
-      console.log('📥 - result.success:', result.success);
-      console.log('📥 - result.message:', result.message);
-      console.log('📥 - result.data:', result.data);
-      console.log('📥 - Object.keys(result):', Object.keys(result));
-      if (result.data) {
-        console.log('📥 - result.data keys:', Object.keys(result.data));
-        console.log('📥 - result.data completo:', JSON.stringify(result.data, null, 2));
-      }
-
       if (result.success) {
-        console.log('✅ Documentos subidos exitosamente');
-        Alert.alert('Éxito', `${Object.keys(selectedFiles).length} documento(s) subido(s) correctamente`);
-        
         // Limpiar archivos seleccionados y recargar documentos
         setSelectedFiles({});
         setShowUploadModal(false);
         await loadDocuments(); // Recargar la lista de documentos
-        
       } else {
-        console.error('❌ Error al subir documentos:', result.message);
         Alert.alert('Error', result.message || 'Error al subir documentos');
       }
 
     } catch (error) {
-      console.error('Error uploading documents:', error);
       Alert.alert('Error', 'Error al subir documentos');
     } finally {
       setIsUploading(false);
@@ -480,8 +412,6 @@ const ContractorDocumentsScreen = ({ navigation, route }) => {
         multiple: false
       });
 
-      console.log('📁 Resultado del selector:', result);
-
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const file = result.assets[0];
         
@@ -495,10 +425,8 @@ const ContractorDocumentsScreen = ({ navigation, route }) => {
         }
 
         setEditSelectedFile(file);
-        console.log('✅ Archivo PDF seleccionado para edición:', file.name);
       }
     } catch (error) {
-      console.error('❌ Error al seleccionar archivo:', error);
       Alert.alert('Error', 'Error al seleccionar el archivo');
     }
   };
@@ -517,7 +445,6 @@ const ContractorDocumentsScreen = ({ navigation, route }) => {
       const userIp = userResult.success && userResult.data?.ip ? userResult.data.ip : 'N/A';
 
       // Preparar FormData - solo enviamos el archivo y la IP
-      // El nombre viene predefinido por el campo multer
       const formData = new FormData();
       formData.append('ip', userIp);
       
@@ -530,28 +457,9 @@ const ContractorDocumentsScreen = ({ navigation, route }) => {
       // El campo en el FormData debe coincidir con el tipo del documento
       formData.append(editingDocument.type, fileToUpload);
 
-      console.log('📤 Editando documento:', {
-        contractorId: contractor._id,
-        fieldType: editingDocument.type,
-        fileName: editSelectedFile.name,
-        userIp: userIp
-      });
-
       const result = await updateContractorDocument(contractor._id, formData);
 
-      console.log('📥 ========== RESPUESTA COMPLETA DE EDICIÓN ==========');
-      console.log('📥 🔍 RESULTADO COMPLETO:', JSON.stringify(result, null, 2));
-      console.log('📥 - result.success:', result.success);
-      console.log('📥 - result.message:', result.message);
-      console.log('📥 - result.data:', result.data);
-      console.log('📥 - Object.keys(result):', Object.keys(result));
-      if (result.data) {
-        console.log('📥 - result.data keys:', Object.keys(result.data));
-        console.log('📥 - result.data completo:', JSON.stringify(result.data, null, 2));
-      }
-
       if (result.success) {
-        console.log('✅ Documento editado exitosamente');
         Alert.alert('Éxito', 'Documento actualizado correctamente');
         
         setShowEditModal(false);
@@ -559,12 +467,10 @@ const ContractorDocumentsScreen = ({ navigation, route }) => {
         setEditSelectedFile(null);
         await loadDocuments(); // Recargar documentos
       } else {
-        console.error('❌ Error al editar documento:', result.message);
         Alert.alert('Error', result.message || 'Error al actualizar documento');
       }
 
     } catch (error) {
-      console.error('❌ Error al editar documento:', error);
       Alert.alert('Error', 'Error al actualizar el documento');
     } finally {
       setIsEditing(false);

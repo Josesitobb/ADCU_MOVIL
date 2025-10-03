@@ -246,7 +246,7 @@ const DocumentManagementScreen = () => {
     }
   };
 
-  // Función para subir todos los archivos seleccionados
+  // Función para subir todos los archivos en UNA SOLA petición
   const uploadAllFiles = async () => {
     const selectedFileKeys = Object.keys(selectedFiles);
     
@@ -268,92 +268,53 @@ const DocumentManagementScreen = () => {
     setUploadingAll(true);
     
     try {
-      const results = [];
+      console.log('🚀 Iniciando envío masivo de documentos...');
+      console.log('📦 Archivos seleccionados:', selectedFileKeys);
+      console.log('📝 Descripción global:', globalDescription.trim());
       
-      for (const fieldKey of selectedFileKeys) {
-        const file = selectedFiles[fieldKey];
-        // Usar la descripción global para todos los archivos
-        const description = globalDescription.trim();
-        
-        try {
-          console.log(`📤 Subiendo ${fieldKey}:`, file.name);
-          console.log(`📝 Usando descripción global:`, description);
-          const result = await uploadDocument(fieldKey, file, description);
-          
-          console.log(`📋 Resultado ${fieldKey}:`, result);
-          console.log(`🔍 Respuesta completa ${fieldKey}:`, JSON.stringify(result.fullResponse, null, 2));
-          
-          results.push({
-            field: fieldKey,
-            fieldName: DOCUMENT_FIELDS[fieldKey],
-            success: result.success,
-            message: result.message,
-            apiResponse: result.fullResponse || result // Guardar respuesta completa
-          });
-        } catch (error) {
-          console.error(`💥 Error subiendo ${fieldKey}:`, error);
-          results.push({
-            field: fieldKey,
-            fieldName: DOCUMENT_FIELDS[fieldKey],
-            success: false,
-            message: `Error: ${error.message}`,
-            apiResponse: null
-          });
-        }
-      }
+      // Usar la función de envío masivo que ya existe en documentService
+      const result = await uploadAllDocuments(selectedFiles, globalDescription.trim());
       
-      const successful = results.filter(r => r.success).length;
-      const total = results.length;
+      console.log('📋 Resultado del envío masivo:', result);
       
-      if (successful > 0) {
+      if (result.success) {
+        // Éxito - limpiar y recargar
         setHasUploaded(true);
         setSelectedFiles({});
         setGlobalDescription('');
         await loadDocuments();
         
-        // Mostrar resumen detallado
-        const successDocs = results.filter(r => r.success);
-        const failedDocs = results.filter(r => !r.success);
-        
-        let message = `✅ Exitosos: ${successful}\n❌ Fallidos: ${total - successful}\n\n`;
-        
-        if (successDocs.length > 0) {
-          message += "EXITOSOS:\n";
-          successDocs.forEach(doc => {
-            message += `• ${doc.fieldName}: ${doc.message}\n`;
-          });
-        }
-        
-        if (failedDocs.length > 0) {
-          message += "\nERRORES:\n";
-          failedDocs.forEach(doc => {
-            message += `• ${doc.fieldName}: ${doc.message}\n`;
-          });
-        }
-        
-        // Mostrar detalles de respuestas
-        console.log('🎯 RESUMEN FINAL DE CARGA:');
-        results.forEach(result => {
-          console.log(`\n📄 Campo: ${result.fieldName}`);
-          console.log(`✅/❌ Éxito: ${result.success}`);
-          console.log(`💬 Mensaje: ${result.message}`);
-          if (result.apiResponse) {
-            console.log(`🌐 Respuesta API:`, JSON.stringify(result.apiResponse, null, 2));
-          }
-        });
-        
-        Alert.alert('Resultado de Subida', message, [
-          {
-            text: 'Ver Logs Completos',
-            onPress: () => {
-              console.log('📊 RESULTADOS COMPLETOS:', results);
-              Alert.alert('Logs', 'Revisa la consola para ver todos los detalles de la API');
-            }
-          },
-          { text: 'OK' }
-        ]);
+        Alert.alert(
+          '✅ Documentos Enviados',
+          `${result.message}\n\nSe enviaron ${selectedFileKeys.length} documentos en una sola petición.\n\nRevisa la consola para detalles completos.`,
+          [
+            {
+              text: 'Ver Logs Completos',
+              onPress: () => {
+                console.log('📊 RESPUESTA COMPLETA API:', result);
+                Alert.alert('Logs', 'Revisa la consola para ver todos los detalles de la API');
+              }
+            },
+            { text: 'OK' }
+          ]
+        );
       } else {
-        Alert.alert('Error', 'No se pudo subir ningún documento');
+        // Error en el envío
+        console.error('❌ Error en envío masivo:', result.message);
+        Alert.alert(
+          '❌ Error al Enviar',
+          `${result.message}\n\nNo se pudieron enviar los documentos.\n\nRevisa la consola para más detalles.`,
+          [
+            {
+              text: 'Ver Logs de Error',
+              onPress: () => {
+                console.log('� ERROR COMPLETO:', result);
+                Alert.alert('Error Logs', 'Revisa la consola para ver los detalles del error');
+              }
+            },
+            { text: 'OK' }
+          ]
+        );
       }
     } catch (error) {
       console.error('💥 Error crítico uploadAllFiles:', error);
@@ -671,44 +632,6 @@ const DocumentManagementScreen = () => {
       >
         <View style={styles.headerSection}>
           <Text style={styles.sectionTitle}>Documentos Requeridos</Text>
-          
-          {/* Input de descripción global */}
-          {Object.keys(selectedFiles).length > 0 && (
-            <View style={styles.globalDescriptionContainer}>
-              <Text style={styles.globalDescriptionLabel}>
-                📝 Descripción de la gestión documental:
-              </Text>
-              <TextInput
-                style={styles.globalDescriptionInput}
-                placeholder="Ingresa una descripción para toda esta gestión documental..."
-                value={globalDescription}
-                onChangeText={setGlobalDescription}
-                multiline
-                numberOfLines={3}
-                maxLength={300}
-              />
-              <Text style={styles.characterCount}>
-                {globalDescription.length}/300 caracteres
-              </Text>
-            </View>
-          )}
-          
-          {Object.keys(selectedFiles).length > 0 && (
-            <TouchableOpacity 
-              style={[styles.uploadAllButton, uploadingAll && styles.uploadAllButtonDisabled]}
-              onPress={uploadAllFiles}
-              disabled={uploadingAll}
-            >
-              {uploadingAll ? (
-                <ActivityIndicator size="small" color="#ffffff" />
-              ) : (
-                <Ionicons name="send" size={20} color="#ffffff" />
-              )}
-              <Text style={styles.uploadAllButtonText}>
-                {uploadingAll ? 'Enviando...' : `Enviar ${Object.keys(selectedFiles).length} Archivo${Object.keys(selectedFiles).length > 1 ? 's' : ''}`}
-              </Text>
-            </TouchableOpacity>
-          )}
         </View>
         
         {/* Instrucciones para el usuario */}
@@ -813,6 +736,52 @@ const DocumentManagementScreen = () => {
             </TouchableOpacity>
           );
         })}
+
+        {/* Descripción global - Abajo de todos los documentos */}
+        {Object.keys(selectedFiles).length > 0 && (
+          <View style={styles.bottomDescriptionContainer}>
+            <Text style={styles.bottomDescriptionLabel}>
+              📝 Descripción de la gestión documental:
+            </Text>
+            <TextInput
+              style={styles.bottomDescriptionInput}
+              placeholder="Ingresa una descripción para toda esta gestión documental..."
+              value={globalDescription}
+              onChangeText={setGlobalDescription}
+              multiline
+              numberOfLines={3}
+              maxLength={300}
+            />
+            <Text style={styles.characterCount}>
+              {globalDescription.length}/300 caracteres
+            </Text>
+          </View>
+        )}
+
+        {/* Botón grande "Enviar Documentos" - Al final */}
+        {Object.keys(selectedFiles).length > 0 && (
+          <View style={styles.bottomButtonContainer}>
+            <TouchableOpacity 
+              style={[styles.bigSendButton, uploadingAll && styles.bigSendButtonDisabled]}
+              onPress={uploadAllFiles}
+              disabled={uploadingAll}
+            >
+              {uploadingAll ? (
+                <>
+                  <ActivityIndicator size="large" color="#ffffff" />
+                  <Text style={styles.bigSendButtonText}>Enviando Documentos...</Text>
+                </>
+              ) : (
+                <>
+                  <Ionicons name="cloud-upload-outline" size={28} color="#ffffff" />
+                  <Text style={styles.bigSendButtonText}>
+                    Enviar Documentos ({Object.keys(selectedFiles).length})
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
 
       </ScrollView>
 
@@ -1512,6 +1481,69 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  // Estilos para descripción y botón de abajo
+  bottomDescriptionContainer: {
+    backgroundColor: '#f0f8ff',
+    borderRadius: 16,
+    padding: 20,
+    marginVertical: 20,
+    marginHorizontal: 4,
+    borderWidth: 2,
+    borderColor: '#3498db',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  bottomDescriptionLabel: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#2c3e50',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  bottomDescriptionInput: {
+    borderWidth: 1,
+    borderColor: '#3498db',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 15,
+    backgroundColor: '#ffffff',
+    textAlignVertical: 'top',
+    minHeight: 90,
+    color: '#2c3e50',
+  },
+  bottomButtonContainer: {
+    paddingHorizontal: 4,
+    paddingVertical: 20,
+    marginBottom: 20,
+  },
+  bigSendButton: {
+    backgroundColor: '#10B981',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 18,
+    paddingHorizontal: 32,
+    borderRadius: 16,
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 10,
+  },
+  bigSendButtonDisabled: {
+    backgroundColor: '#9CA3AF',
+    shadowColor: '#9CA3AF',
+  },
+  bigSendButtonText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '700',
+    marginLeft: 12,
+    textAlign: 'center',
   },
 });
 

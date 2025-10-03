@@ -98,35 +98,6 @@ const DashboardHome = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Actividades Recientes */}
-        <View style={styles.recentSection}>
-          <Text style={styles.sectionTitle}>Actividad Reciente</Text>
-          
-          <View style={styles.activityItem}>
-            <Ionicons name="checkmark-circle" size={20} color="#2ecc71" />
-            <View style={styles.activityContent}>
-              <Text style={styles.activityText}>Documento aprobado: "Planos Arquitectónicos"</Text>
-              <Text style={styles.activityTime}>Hace 2 horas</Text>
-            </View>
-          </View>
-
-          <View style={styles.activityItem}>
-            <Ionicons name="cloud-upload" size={20} color="#3498db" />
-            <View style={styles.activityContent}>
-              <Text style={styles.activityText}>Subida de fotos de avance del proyecto</Text>
-              <Text style={styles.activityTime}>Ayer a las 3:30 PM</Text>
-            </View>
-          </View>
-
-          <View style={styles.activityItem}>
-            <Ionicons name="cash" size={20} color="#f39c12" />
-            <View style={styles.activityContent}>
-              <Text style={styles.activityText}>Pago procesado: $20,000</Text>
-              <Text style={styles.activityTime}>3 días</Text>
-            </View>
-          </View>
-        </View>
-
       </View>
     </SafeAreaView>
   );
@@ -274,41 +245,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
   },
-  recentSection: {
-    marginTop: 24,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-    marginBottom: 16,
-  },
-  activityItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  activityContent: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  activityText: {
-    fontSize: 14,
-    color: '#2c3e50',
-    marginBottom: 2,
-  },
-  activityTime: {
-    fontSize: 12,
-    color: '#7f8c8d',
-  },
+
 });
 
 export default DashboardTabs;

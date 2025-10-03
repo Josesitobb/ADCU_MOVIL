@@ -15,8 +15,8 @@ import { StatusBar } from 'expo-status-bar';
 import { loginUser, getNavigationScreenForRole } from '../services/authService';
 
 const LoginScreen = ({ navigation }) => {
-  const [email, setEmail] = useState('funcionario200@gmail.com');
-  const [password, setPassword] = useState('Funcionario200123');
+  const [email, setEmail] = useState('annyfalkonerth@gmail.com11');
+  const [password, setPassword] = useState('Prueba12345671');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
